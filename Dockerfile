@@ -1,48 +1,50 @@
 FROM alpine:latest
 
-# Instalar Nginx y PHP 8 con todas las extensiones necesarias
-RUN apk add --no-cache nginx \
-    php8 \
-    php8-fpm \
-    php8-xml \
-    php8-exif \
-    php8-session \
-    php8-soap \
-    php8-openssl \
-    php8-gmp \
-    php8-pdo_odbc \
-    php8-json \
-    php8-dom \
-    php8-pdo \
-    php8-zip \
-    php8-mysqli \
-    php8-sqlite3 \
-    php8-pdo_pgsql \
-    php8-bcmath \
-    php8-gd \
-    php8-odbc \
-    php8-pdo_mysql \
-    php8-pdo_sqlite \
-    php8-gettext \
-    php8-xmlreader \
-    php8-bz2 \
-    php8-iconv \
-    php8-pdo_dblib \
-    php8-curl \
-    php8-ctype \
-    php8-phar \
-    php8-fileinfo \
-    php8-mbstring \
-    php8-tokenizer \
-    php8-simplexml \
-    # Extensiones críticas para HumHub
-    php8-ldap \
-    php8-sodium \
-    php8-intl \
-    php8-xmlwriter \
-    php8-imagick \
-    php8-apcu \
-    php8-opcache
+# Habilitar el repositorio community (necesario para PHP)
+RUN echo "https://dl-cdn.alpinelinux.org/alpine/v3.20/community" >> /etc/apk/repositories
+
+# Actualizar e instalar Nginx y PHP 8.3 (o 8.2) con todas las extensiones
+RUN apk update && apk add --no-cache nginx \
+    php83 \
+    php83-fpm \
+    php83-xml \
+    php83-exif \
+    php83-session \
+    php83-soap \
+    php83-openssl \
+    php83-gmp \
+    php83-pdo_odbc \
+    php83-json \
+    php83-dom \
+    php83-pdo \
+    php83-zip \
+    php83-mysqli \
+    php83-sqlite3 \
+    php83-pdo_pgsql \
+    php83-bcmath \
+    php83-gd \
+    php83-odbc \
+    php83-pdo_mysql \
+    php83-pdo_sqlite \
+    php83-gettext \
+    php83-xmlreader \
+    php83-bz2 \
+    php83-iconv \
+    php83-pdo_dblib \
+    php83-curl \
+    php83-ctype \
+    php83-phar \
+    php83-fileinfo \
+    php83-mbstring \
+    php83-tokenizer \
+    php83-simplexml \
+    php83-ldap \
+    php83-sodium \
+    php83-intl \
+    php83-xmlwriter \
+    php83-imagick \
+    php83-apcu \
+    php83-opcache
 
 # Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
@@ -53,6 +55,6 @@ USER container
 ENV USER=container HOME=/home/container
 WORKDIR /home/container
 
-# Entrypoint (asegúrate de tener este archivo en tu repositorio)
+# Entrypoint
 COPY ./entrypoint.sh /entrypoint.sh
 CMD ["/bin/sh", "/entrypoint.sh"]
