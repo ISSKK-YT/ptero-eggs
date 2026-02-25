@@ -34,7 +34,7 @@ RUN apk add --no-cache \
     build-base \
     nginx
 
-# Configurar y compilar extensiones PHP
+# Configurar y compilar extensiones PHP (incluyendo exif)
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp --with-avif \
     && docker-php-ext-install -j$(nproc) \
         pdo_mysql \
@@ -46,6 +46,7 @@ RUN docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp --with-a
         sodium \
         opcache \
         zip \
+        exif \
     && pecl install imagick \
     && docker-php-ext-enable imagick
 
@@ -62,12 +63,13 @@ COPY nginx/nginx.conf /etc/nginx/nginx.conf
 
 # Crear usuario container
 RUN adduser -D -h /home/container container
+
 # Copiar entrypoint y dar permisos de ejecución
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
+
 USER container
 ENV USER=container HOME=/home/container
 WORKDIR /home/container
-
 
 CMD ["/bin/sh", "/entrypoint.sh"]
