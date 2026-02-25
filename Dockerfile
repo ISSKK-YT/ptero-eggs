@@ -1,8 +1,4 @@
-FROM php:8.3-fpm-alpine
-
-# Instalar dependencias del sistema y extensiones PHP
 RUN apk add --no-cache nginx \
-    # Dependencias para extensiones PHP
     zlib-dev \
     libpng-dev \
     libjpeg-turbo-dev \
@@ -14,7 +10,7 @@ RUN apk add --no-cache nginx \
     openldap-dev \
     libsodium-dev \
     imagemagick-dev \
-    # Otras utilidades
+    libzip-dev \      # <-- AÑADE ESTA LÍNEA
     git \
     unzip \
     && docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp --with-avif \
@@ -30,17 +26,4 @@ RUN apk add --no-cache nginx \
         zip \
     && pecl install imagick \
     && docker-php-ext-enable imagick \
-    && apk del zlib-dev libpng-dev libjpeg-turbo-dev freetype-dev libxpm-dev libwebp-dev libavif-dev icu-dev openldap-dev libsodium-dev imagemagick-dev # Opcional: eliminar dependencias de desarrollo para reducir tamaño
-
-# Composer
-COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
-
-# Usuario y entorno (ajustar según el egg de Pterodactyl)
-RUN adduser -D -h /home/container container
-USER container
-ENV USER=container HOME=/home/container
-WORKDIR /home/container
-
-# Entrypoint
-COPY ./entrypoint.sh /entrypoint.sh
-CMD ["/bin/sh", "/entrypoint.sh"]
+    && apk del zlib-dev libpng-dev libjpeg-turbo-dev freetype-dev libxpm-dev libwebp-dev libavif-dev icu-dev openldap-dev libsodium-dev imagemagick-dev libzip-dev
