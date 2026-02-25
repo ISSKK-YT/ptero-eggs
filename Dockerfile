@@ -62,13 +62,12 @@ COPY nginx/nginx.conf /etc/nginx/nginx.conf
 
 # Crear usuario container
 RUN adduser -D -h /home/container container
-
+# Copiar entrypoint y dar permisos de ejecución
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
 USER container
 ENV USER=container HOME=/home/container
 WORKDIR /home/container
 
-# Copiar entrypoint y dar permisos de ejecución
-COPY entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
 
 CMD ["/bin/sh", "/entrypoint.sh"]
