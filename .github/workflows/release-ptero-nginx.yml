@@ -18,9 +18,6 @@ jobs:
 
       - name: Set owner in lowercase
         run: |
-          # Extrae el dueño de GITHUB_REPOSITORY (que está en minúsculas)
-          OWNER_LC="${GITHUB_REPOSITORY%%/*}"
-          echo "OWNER_LC=$OWNER_LC" >> $GITHUB_ENV
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
@@ -32,7 +29,7 @@ jobs:
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
-          username: ${{ github.actor }}
+          username: isskk-yt
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and push Docker image
