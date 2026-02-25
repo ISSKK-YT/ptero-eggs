@@ -16,9 +16,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set owner in lowercase
-        run: |
-
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
 
@@ -29,7 +26,7 @@ jobs:
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
-          username: isskk-yt
+          username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and push Docker image
@@ -40,5 +37,5 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: true
           tags: |
-            ghcr.io/${{ env.OWNER_LC }}/nginx-ptero:8.2
-            ghcr.io/${{ env.OWNER_LC }}/nginx-ptero:latest
+            ghcr.io/isskk-yt/nginx-ptero:8.2   # <-- Nombre en minúsculas fijo
+            ghcr.io/isskk-yt/nginx-ptero:latest
