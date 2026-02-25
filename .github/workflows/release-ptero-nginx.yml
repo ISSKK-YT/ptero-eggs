@@ -5,7 +5,6 @@ on:
   push:
     branches: [ main ]
 
-# Permisos necesarios para que GITHUB_TOKEN pueda publicar paquetes
 permissions:
   contents: read
   packages: write
@@ -16,6 +15,12 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Set owner in lowercase
+        run: |
+          # Extrae el dueño de GITHUB_REPOSITORY (que está en minúsculas)
+          OWNER_LC="${GITHUB_REPOSITORY%%/*}"
+          echo "OWNER_LC=$OWNER_LC" >> $GITHUB_ENV
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
@@ -28,7 +33,7 @@ jobs:
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}  # Token automático
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
@@ -38,5 +43,5 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: true
           tags: |
-            ghcr.io/${{ github.repository_owner }}/nginx-ptero:8.2
-            ghcr.io/${{ github.repository_owner }}/nginx-ptero:latest
+            ghcr.io/${{ env.OWNER_LC }}/nginx-ptero:8.2
+            ghcr.io/${{ env.OWNER_LC }}/nginx-ptero:latest
