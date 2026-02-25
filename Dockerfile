@@ -1,6 +1,21 @@
 FROM php:8.3-fpm-alpine
 
-RUN apk add --no-cache nginx \
+# Instalar dependencias del sistema (runtime + desarrollo)
+RUN apk add --no-cache \
+    # === Bibliotecas runtime (necesarias para que las extensiones funcionen) ===
+    libpng \
+    libjpeg-turbo \
+    freetype \
+    libxpm \
+    libwebp \
+    libavif \
+    icu-libs \
+    openldap \
+    libsodium \
+    imagemagick \
+    libzip \
+    libgomp \
+    # === Dependencias de desarrollo (solo para compilar) ===
     zlib-dev \
     libpng-dev \
     libjpeg-turbo-dev \
@@ -17,7 +32,10 @@ RUN apk add --no-cache nginx \
     unzip \
     autoconf \
     build-base \
-    && docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp --with-avif \
+    nginx
+
+# Configurar y compilar extensiones PHP
+RUN docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp --with-avif \
     && docker-php-ext-install -j$(nproc) \
         pdo_mysql \
         mysqli \
@@ -29,27 +47,18 @@ RUN apk add --no-cache nginx \
         opcache \
         zip \
     && pecl install imagick \
-    && docker-php-ext-enable imagick \
-    && apk del \
-        zlib-dev \
-        libpng-dev \
-        libjpeg-turbo-dev \
-        freetype-dev \
-        libxpm-dev \
-        libwebp-dev \
-        libavif-dev \
-        icu-dev \
-        openldap-dev \
-        libsodium-dev \
-        imagemagick-dev \
-        libzip-dev \
-        autoconf \
-        build-base \
-        git \
-        unzip
+    && docker-php-ext-enable imagick
+
+# Eliminar solo los paquetes de desarrollo (las librerías runtime se conservan)
+RUN apk del zlib-dev libpng-dev libjpeg-turbo-dev freetype-dev libxpm-dev libwebp-dev \
+    libavif-dev icu-dev openldap-dev libsodium-dev imagemagick-dev libzip-dev \
+    autoconf build-base git unzip
 
 # Instalar Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+
+# Configuración de Nginx: copiar archivo de configuración personalizado
+COPY nginx.conf /etc/nginx/nginx.conf
 
 # Crear usuario container
 RUN adduser -D -h /home/container container
@@ -58,6 +67,8 @@ USER container
 ENV USER=container HOME=/home/container
 WORKDIR /home/container
 
-# Copiar entrypoint (asegúrate de tener este archivo)
-COPY ./entrypoint.sh /entrypoint.sh
+# Copiar entrypoint y dar permisos de ejecución
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
 CMD ["/bin/sh", "/entrypoint.sh"]
