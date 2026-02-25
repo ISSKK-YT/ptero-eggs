@@ -1,31 +1,41 @@
-name: Nginx 8.1
+name: Build and Push Nginx PHP Image
 
 on:
-  workflow_dispatch:
+  workflow_dispatch:  # Permite ejecución manual
+  push:
+    branches: [ main ]  # Opcional: también se ejecuta al hacer push a main
 
 jobs:
-  push:
-    name: "nginx-ptero:8.1"
+  build-and-push:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
     steps:
-      - uses: actions/checkout@v2
-      - uses: docker/setup-qemu-action@v1
-      - uses: docker/setup-buildx-action@v1
+      - name: Checkout repository
+        uses: actions/checkout@v4  # Actualizado a v4
+
+      - name: Set up QEMU (para multiarquitectura)
+        uses: docker/setup-qemu-action@v3  # Actualizado
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3  # Actualizado
         with:
-          version: "v0.5.1"
-          buildkitd-flags: --debug
-      - uses: docker/login-action@v1
+          version: latest
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3  # Actualizado
         with:
           registry: ghcr.io
-          username: ${{ github.repository_owner }}
-          password: ${{ secrets.PUSH_TOKEN }}
-      - uses: docker/build-push-action@v2
+          username: ${{ github.actor }}  # Usa el nombre del usuario que ejecuta el workflow
+          password: ${{ secrets.PUSH_TOKEN }}  # Debes crear este secreto en tu fork
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5  # Actualizado
         with:
-          context: ./
-          file: ./Dockerfile
-          platforms: linux/amd64,linux/arm64
+          context: .
+          file: ./Dockerfile  # Asegúrate de que el Dockerfile esté en la raíz
+          platforms: linux/amd64,linux/arm64  # Soporte para ambas arquitecturas
           push: true
           tags: |
-            ghcr.io/isskk-yt/nginx-ptero:8.1
+            ghcr.io/${{ github.repository_owner }}/nginx-ptero:8.2
+            ghcr.io/${{ github.repository_owner }}/nginx-ptero:latest  # Etiqueta opcional
