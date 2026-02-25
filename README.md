@@ -1,4 +1,4 @@
-# Sigma Productions – Pterodactyl & Pelican Eggs
+# Pterodactyl & Pelican Eggs
 
 This repository contains **Pterodactyl / Pelican eggs** maintained by **Sigma Productions**, providing preconfigured setups for **web hosting** (with WordPress support) and **internet radio streaming** (Icecast2 + Liquidsoap).  
 
