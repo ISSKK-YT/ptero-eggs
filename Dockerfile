@@ -1,50 +1,13 @@
-FROM alpine:latest
+FROM php:8.3-fpm-alpine
 
-# Habilitar el repositorio community (necesario para PHP)
-RUN echo "https://dl-cdn.alpinelinux.org/alpine/v3.20/community" >> /etc/apk/repositories
+# Instalar Nginx y extensiones adicionales
+RUN apk add --no-cache nginx && \
+    docker-php-ext-install pdo_mysql mysqli bcmath gd intl ldap sodium opcache zip
 
-# Actualizar e instalar Nginx y PHP 8.3 (o 8.2) con todas las extensiones
-RUN apk update && apk add --no-cache nginx \
-    php83 \
-    php83-fpm \
-    php83-xml \
-    php83-exif \
-    php83-session \
-    php83-soap \
-    php83-openssl \
-    php83-gmp \
-    php83-pdo_odbc \
-    php83-json \
-    php83-dom \
-    php83-pdo \
-    php83-zip \
-    php83-mysqli \
-    php83-sqlite3 \
-    php83-pdo_pgsql \
-    php83-bcmath \
-    php83-gd \
-    php83-odbc \
-    php83-pdo_mysql \
-    php83-pdo_sqlite \
-    php83-gettext \
-    php83-xmlreader \
-    php83-bz2 \
-    php83-iconv \
-    php83-pdo_dblib \
-    php83-curl \
-    php83-ctype \
-    php83-phar \
-    php83-fileinfo \
-    php83-mbstring \
-    php83-tokenizer \
-    php83-simplexml \
-    php83-ldap \
-    php83-sodium \
-    php83-intl \
-    php83-xmlwriter \
-    php83-imagick \
-    php83-apcu \
-    php83-opcache
+# Instalar imagick (requiere ImageMagick y la extensión PECL)
+RUN apk add --no-cache imagemagick imagemagick-dev && \
+    pecl install imagick && \
+    docker-php-ext-enable imagick
 
 # Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
