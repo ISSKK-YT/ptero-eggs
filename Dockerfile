@@ -48,9 +48,6 @@ RUN apk add --no-cache nginx \
         git \
         unzip
 
-# Opcional: eliminar dependencias de desarrollo para reducir tamaño
-RUN apk del zlib-dev libpng-dev libjpeg-turbo-dev freetype-dev libxpm-dev libwebp-dev libavif-dev icu-dev openldap-dev libsodium-dev imagemagick-dev libzip-dev
-
 # Instalar Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
