@@ -58,7 +58,7 @@ RUN apk del zlib-dev libpng-dev libjpeg-turbo-dev freetype-dev libxpm-dev libweb
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 # Configuración de Nginx: copiar archivo de configuración personalizado
-COPY nginx.conf /etc/nginx/nginx.conf
+COPY nginx/nginx.conf /etc/nginx/nginx.conf
 
 # Crear usuario container
 RUN adduser -D -h /home/container container
