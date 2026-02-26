@@ -36,12 +36,9 @@ RUN apk add --no-cache \
     build-base \
     nginx \
     # === Dependencias de PostgreSQL ===
-    postgresql-dev \
-    # --- Asegurar que los binarios de PostgreSQL estén disponibles ---
-    # (Si no se instalan con postgresql-dev, quizás necesitemos esto explícitamente)
-    # postgresql-client
+    postgresql-dev
 
-# Bloque 2: Configurar y compilar extensiones PHP
+# Bloque 2: Configurar y compilar extensiones PHP (en una instrucción RUN SEPARADA)
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp --with-avif \
     && docker-php-ext-install -j$(nproc) \
         pdo_mysql \
@@ -61,6 +58,7 @@ RUN docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp --with-a
     && docker-php-ext-enable imagick
 
 # --- Eliminar paquetes de desarrollo ---
+# Bloque 3: Eliminar dependencias de desarrollo (en una instrucción RUN SEPARADA)
 RUN apk del zlib-dev libpng-dev libjpeg-turbo-dev freetype-dev libxpm-dev libwebp-dev \
     libavif-dev icu-dev openldap-dev libsodium-dev imagemagick-dev libzip-dev \
     autoconf build-base git unzip \
@@ -80,7 +78,7 @@ COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
 # --- Configurar PHP-FPM ---
-# Bloque 3: Lógica para configurar PHP-FPM
+# Bloque 4: Lógica para configurar PHP-FPM (en una instrucción RUN SEPARADA)
 RUN PHP_FPM_POOL_CONF="/etc/php8/php-fpm.d/www.conf" \
     && echo "Configurando PHP-FPM para el usuario 'container'..." \
     && if [ -f "$PHP_FPM_POOL_CONF" ]; then \
