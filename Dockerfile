@@ -1,9 +1,10 @@
 # Utiliza la imagen base de PHP 8.3 Alpine
 FROM php:8.3-fpm-alpine
 
-# --- Instalar dependencias del sistema ---
+# --- Instalar dependencias del sistema (runtime + desarrollo) ---
+# Bloque 1: Solo instalación de paquetes del sistema
 RUN apk add --no-cache \
-    # === Bibliotecas runtime (necesarias para que las extensiones funcionen) ===
+    # === Bibliotecas runtime ===
     libpng \
     libjpeg-turbo \
     freetype \
@@ -16,7 +17,7 @@ RUN apk add --no-cache \
     imagemagick \
     libzip \
     libgomp \
-    # === Dependencias de desarrollo (solo para compilar) ===
+    # === Dependencias de desarrollo ===
     zlib-dev \
     libpng-dev \
     libjpeg-turbo-dev \
@@ -35,13 +36,11 @@ RUN apk add --no-cache \
     build-base \
     nginx \
     # === Dependencias de PostgreSQL ===
-    postgresql-dev \
-    # Nota: libpq-dev también podría ser necesario en algunos casos,
-    # pero postgresql-dev suele incluirlo en Alpine.
+    postgresql-dev
 
-# --- Configurar y compilar extensiones PHP ---
-RUN echo "<?php phpinfo(); ?>" > /var/www/html/info.php \
-    && docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp --with-avif \
+# Bloque 2: Configurar y compilar extensiones PHP (incluyendo PostgreSQL)
+# IMPORTANTE: Esto debe ir en una instrucción RUN SEPARADA de 'apk add'
+RUN docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp --with-avif \
     && docker-php-ext-install -j$(nproc) \
         pdo_mysql \
         mysqli \
@@ -59,7 +58,8 @@ RUN echo "<?php phpinfo(); ?>" > /var/www/html/info.php \
     && pecl install imagick \
     && docker-php-ext-enable imagick
 
-# --- Eliminar paquetes de desarrollo para reducir el tamaño de la imagen ---
+# --- Eliminar paquetes de desarrollo ---
+# Bloque 3: Eliminar dependencias de desarrollo
 RUN apk del zlib-dev libpng-dev libjpeg-turbo-dev freetype-dev libxpm-dev libwebp-dev \
     libavif-dev icu-dev openldap-dev libsodium-dev imagemagick-dev libzip-dev \
     autoconf build-base git unzip \
@@ -79,8 +79,7 @@ COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
 # Configurar PHP-FPM para que el usuario 'container' pueda acceder a él
-# (Ajusta si tu aplicación necesita permisos específicos)
-RUN sed -i 'slog_level = notice/log_level = debug/' /etc/php83/php-fpm.conf \
+RUN sed -i 's/log_level = notice/log_level = debug/' /etc/php83/php-fpm.conf \
     && sed -i 's/;listen.owner = www-data/listen.owner = container/' /etc/php83/php-fpm.conf \
     && sed -i 's/;listen.group = www-data/listen.group = container/' /etc/php83/php-fpm.conf \
     && sed -i 's/;listen.mode = 0660/listen.mode = 0660/' /etc/php83/php-fpm.conf \
@@ -92,7 +91,6 @@ ENV USER=container HOME=/home/container
 WORKDIR /home/container
 
 # Asegurarse de que el directorio de trabajo y sus subdirectorios tengan los permisos correctos
-# Esto es importante si la aplicación necesita escribir en algún lugar.
 RUN chown -R container:container /home/container
 
 # CMD para iniciar el entrypoint script
