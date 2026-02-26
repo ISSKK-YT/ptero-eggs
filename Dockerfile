@@ -77,22 +77,22 @@ COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
 # --- Configurar PHP-FPM ---
-# Bloque 4: Lógica para configurar PHP-FPM (¡CORREGIDO!)
+# Bloque 4: Lógica para configurar PHP-FPM (¡VERSIÓN REVISADA!)
 RUN PHP_FPM_POOL_CONF="/etc/php8/php-fpm.d/www.conf" \
-    && /bin/sh -c "echo 'Configurando PHP-FPM para el usuario \"container\"...' ; \
-                   if [ -f \"$PHP_FPM_POOL_CONF\" ]; then \
-                       echo 'Modificando \'$PHP_FPM_POOL_CONF\'...' ; \
-                       sed -i 's/log_level = notice/log_level = debug/' \"$PHP_FPM_POOL_CONF\" ; \
-                       sed -i 's/;listen.owner = www-data/listen.owner = container/' \"$PHP_FPM_POOL_CONF\" ; \
-                       sed -i 's/;listen.group = www-data/listen.group = container/' \"$PHP_FPM_POOL_CONF\" ; \
-                       sed -i 's/;listen.mode = 0660/listen.mode = 0660/' \"$PHP_FPM_POOL_CONF\" ; \
-                       sed -i 's/user = www-data/user = container/' \"$PHP_FPM_POOL_CONF\" ; \
-                       sed -i 's/group = www-data/group = container/' \"$PHP_FPM_POOL_CONF\" ; \
-                       echo 'Configuración de PHP-FPM aplicada.' ; \
-                   else \
-                       echo \"ADVERTENCIA: El archivo de configuración '$PHP_FPM_POOL_CONF' no se encontró. No se aplicaron las configuraciones de PHP-FPM.\" ; \
-                       echo \"Podría ser necesario ajustar la ruta del archivo de configuración de PHP-FPM para esta imagen Alpine.\" ; \
-                   fi"
+    && printf "%s\n" "Configurando PHP-FPM para el usuario 'container'..." \
+    && if [ -f "$PHP_FPM_POOL_CONF" ]; then \
+        echo "Modificando '$PHP_FPM_POOL_CONF'..." ; \
+        sed -i 's/log_level = notice/log_level = debug/' "$PHP_FPM_POOL_CONF" ; \
+        sed -i 's/;listen.owner = www-data/listen.owner = container/' "$PHP_FPM_POOL_CONF" ; \
+        sed -i 's/;listen.group = www-data/listen.group = container/' "$PHP_FPM_POOL_CONF" ; \
+        sed -i 's/;listen.mode = 0660/listen.mode = 0660/' "$PHP_FPM_POOL_CONF" ; \
+        sed -i 's/user = www-data/user = container/' "$PHP_FPM_POOL_CONF" ; \
+        sed -i 's/group = www-data/group = container/' "$PHP_FPM_POOL_CONF" ; \
+        echo 'Configuración de PHP-FPM aplicada.' ; \
+    else \
+        echo "ADVERTENCIA: El archivo de configuración '$PHP_FPM_POOL_CONF' no se encontró. No se aplicaron las configuraciones de PHP-FPM." ; \
+        echo "Podría ser necesario ajustar la ruta del archivo de configuración de PHP-FPM para esta imagen Alpine." ; \
+    fi
 
 USER container
 ENV USER=container HOME=/home/container
