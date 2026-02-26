@@ -2,8 +2,8 @@
 FROM php:8.3-fpm-alpine
 
 # --- Instalar dependencias del sistema (runtime + desarrollo) ---
-# Bloque 1: Solo instalación de paquetes del sistema
 RUN apk add --no-cache \
+    # === Bibliotecas runtime ===
     libpng \
     libjpeg-turbo \
     freetype \
@@ -16,6 +16,7 @@ RUN apk add --no-cache \
     imagemagick \
     libzip \
     libgomp \
+    # === Dependencias de desarrollo ===
     zlib-dev \
     libpng-dev \
     libjpeg-turbo-dev \
@@ -33,7 +34,11 @@ RUN apk add --no-cache \
     autoconf \
     build-base \
     nginx \
-    postgresql-dev
+    # === Dependencias de PostgreSQL ===
+    postgresql-dev \
+    # --- ¡AHORA SÍ! Instalar los binarios completos de PostgreSQL ---
+    postgresql \
+    postgresql-client
 
 # Bloque 2: Configurar y compilar extensiones PHP
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp --with-avif \
@@ -57,7 +62,9 @@ RUN docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp --with-a
 RUN apk del zlib-dev libpng-dev libjpeg-turbo-dev freetype-dev libxpm-dev libwebp-dev \
     libavif-dev icu-dev openldap-dev libsodium-dev imagemagick-dev libzip-dev \
     autoconf build-base git unzip \
-    postgresql-dev
+    postgresql-dev \
+    postgresql \
+    postgresql-client # Elimina también los paquetes de runtime de PostgreSQL si solo los necesitas para compilar
 
 # Instalar Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
@@ -73,18 +80,16 @@ COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
 # --- Configurar PHP-FPM ---
-# Bloque 4: Lógica para configurar PHP-FPM
-# AJUSTE FINAL: Envolver todo el bloque de script en /bin/sh -c "..."
 RUN PHP_FPM_POOL_CONF="/etc/php8/php-fpm.d/www.conf" \
     && /bin/sh -c "echo 'Configurando PHP-FPM para el usuario \"container\"...' ; \
                    if [ -f \"$PHP_FPM_POOL_CONF\" ]; then \
                        echo \"Modificando '$PHP_FPM_POOL_CONF'...\" ; \
-                       sed -i 's/log_level = notice/log_level = debug/' \"$PHP_FPM_POOL_CONF\" ; \
-                       sed -i 's/;listen.owner = www-data/listen.owner = container/' \"$PHP_FPM_POOL_CONF\" ; \
-                       sed -i 's/;listen.group = www-data/listen.group = container/' \"$PHP_FPM_POOL_CONF\" ; \
-                       sed -i 's/;listen.mode = 0660/listen.mode = 0660/' \"$PHP_FPM_POOL_CONF\" ; \
-                       sed -i 's/user = www-data/user = container/' \"$PHP_FPM_POOL_CONF\" ; \
-                       sed -i 's/group = www-data/group = container/' \"$PHP_FPM_POOL_CONF\" ; \
+                       && sed -i 's/log_level = notice/log_level = debug/' \"$PHP_FPM_POOL_CONF\" \
+                       && sed -i 's/;listen.owner = www-data/listen.owner = container/' \"$PHP_FPM_POOL_CONF\" \
+                       && sed -i 's/;listen.group = www-data/listen.group = container/' \"$PHP_FPM_POOL_CONF\" \
+                       && sed -i 's/;listen.mode = 0660/listen.mode = 0660/' \"$PHP_FPM_POOL_CONF\" \
+                       && sed -i 's/user = www-data/user = container/' \"$PHP_FPM_POOL_CONF\" \
+                       && sed -i 's/group = www-data/group = container/' \"$PHP_FPM_POOL_CONF\" ; \
                        echo 'Configuración de PHP-FPM aplicada.' ; \
                    else \
                        echo \"ADVERTENCIA: El archivo de configuración '$PHP_FPM_POOL_CONF' no se encontró. No se aplicaron las configuraciones de PHP-FPM.\" ; \
