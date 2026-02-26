@@ -37,12 +37,9 @@ RUN apk add --no-cache \
     nginx \
     # === Dependencias de PostgreSQL ===
     postgresql-dev \
-    # --- Ajuste: Instalar el paquete PHP-FPM necesario ---
-    # Aunque la imagen base es php:8.3-fpm, a veces es bueno asegurarse de que
-    # los archivos de configuración estén presentes y sean correctos.
-    # En Alpine, la estructura de PHP-FPM puede variar.
-    # El archivo principal suele estar en /etc/php8/php-fpm.conf o en /etc/php8/php-fpm.d/
-    # Vamos a asumir que existe en /etc/php8/php-fpm.d/www.conf para los ajustes finos.
+    # --- Asegurar que los binarios de PostgreSQL estén disponibles ---
+    # (Si no se instalan con postgresql-dev, quizás necesitemos esto explícitamente)
+    # postgresql-client
 
 # Bloque 2: Configurar y compilar extensiones PHP
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp --with-avif \
@@ -83,27 +80,22 @@ COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
 # --- Configurar PHP-FPM ---
-# AJUSTE CLAVE: La ubicación del archivo de configuración de PHP-FPM en Alpine es diferente.
-# El archivo principal de configuración de pools suele ser www.conf dentro de php-fpm.d/
-# Verificamos si el archivo existe y luego aplicamos los cambios.
-# Usaremos una verificación condicional para evitar el error si el archivo no está en la ruta esperada.
-
-echo "Configurando PHP-FPM para el usuario 'container'..."
-PHP_FPM_POOL_CONF="/etc/php8/php-fpm.d/www.conf" # Ruta más común en Alpine
-
-if [ -f "$PHP_FPM_POOL_CONF" ]; then
-    echo "Modificando '$PHP_FPM_POOL_CONF'..."
-    sed -i 's/log_level = notice/log_level = debug/' "$PHP_FPM_POOL_CONF" \
-    && sed -i 's/;listen.owner = www-data/listen.owner = container/' "$PHP_FPM_POOL_CONF" \
-    && sed -i 's/;listen.group = www-data/listen.group = container/' "$PHP_FPM_POOL_CONF" \
-    && sed -i 's/;listen.mode = 0660/listen.mode = 0660/' "$PHP_FPM_POOL_CONF" \
-    && sed -i 's/user = www-data/user = container/' "$PHP_FPM_POOL_CONF" \
-    && sed -i 's/group = www-data/group = container/' "$PHP_FPM_POOL_CONF"
-    echo "Configuración de PHP-FPM aplicada."
-else
-    echo "ADVERTENCIA: El archivo de configuración '$PHP_FPM_POOL_CONF' no se encontró. No se aplicaron las configuraciones de PHP-FPM."
-    echo "Podría ser necesario ajustar la ruta del archivo de configuración de PHP-FPM para esta imagen Alpine."
-fi
+# Bloque 3: Lógica para configurar PHP-FPM
+RUN PHP_FPM_POOL_CONF="/etc/php8/php-fpm.d/www.conf" \
+    && echo "Configurando PHP-FPM para el usuario 'container'..." \
+    && if [ -f "$PHP_FPM_POOL_CONF" ]; then \
+        echo "Modificando '$PHP_FPM_POOL_CONF'..." \
+        && sed -i 's/log_level = notice/log_level = debug/' "$PHP_FPM_POOL_CONF" \
+        && sed -i 's/;listen.owner = www-data/listen.owner = container/' "$PHP_FPM_POOL_CONF" \
+        && sed -i 's/;listen.group = www-data/listen.group = container/' "$PHP_FPM_POOL_CONF" \
+        && sed -i 's/;listen.mode = 0660/listen.mode = 0660/' "$PHP_FPM_POOL_CONF" \
+        && sed -i 's/user = www-data/user = container/' "$PHP_FPM_POOL_CONF" \
+        && sed -i 's/group = www-data/group = container/' "$PHP_FPM_POOL_CONF"; \
+        echo "Configuración de PHP-FPM aplicada." \
+    else \
+        echo "ADVERTENCIA: El archivo de configuración '$PHP_FPM_POOL_CONF' no se encontró. No se aplicaron las configuraciones de PHP-FPM." \
+        echo "Podría ser necesario ajustar la ruta del archivo de configuración de PHP-FPM para esta imagen Alpine." \
+    fi
 
 USER container
 ENV USER=container HOME=/home/container
