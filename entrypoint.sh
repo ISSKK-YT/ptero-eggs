@@ -1,17 +1,13 @@
 #!/bin/sh
+# Pterodactyl Entrypoint para Alpine
+sleep 1
+cd /home/container
 
-# 1. Inicializar MariaDB en /home/container si no existe
-if [ ! -d "/home/container/mysql_data" ]; then
-    echo "📦 Inicializando base de datos en /home/container/mysql_data..."
-    mysql_install_db --user=container --datadir=/home/container/mysql_data --basedir=/usr
-fi
+# Reemplazar variables de inicio
+MODIFIED_STARTUP=$(echo ${STARTUP} | sed -e 's/{{/${/g' -e 's/}}/}/g')
+MODIFIED_STARTUP=$(eval echo ${MODIFIED_STARTUP})
 
-# 2. Arrancar MariaDB en segundo plano apuntando a la zona escribible
-/usr/bin/mariadbd --user=container \
-    --datadir=/home/container/mysql_data \
-    --run-as-user=container \
-    --port=3306 \
-    --bind-address=127.0.0.1 \
-    --socket=/home/container/mysql.sock &
+echo ":/home/container$ ${MODIFIED_STARTUP}"
 
+# Ejecutar el comando de inicio
 exec ${MODIFIED_STARTUP}
