@@ -1,6 +1,6 @@
 # Utiliza la imagen base de PHP 8.3 Alpine
 FROM php:8.3-fpm-alpine
-
+USER root
 # --- Instalar dependencias del sistema (runtime + desarrollo) ---
 RUN apk add --no-cache \
     libpng \
