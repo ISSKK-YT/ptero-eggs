@@ -85,7 +85,6 @@ RUN PHP_FPM_POOL_CONF="/usr/local/etc/php-fpm.d/www.conf" \
         sed -i 's/;listen.group = www-data/listen.group = container/' "$PHP_FPM_POOL_CONF" ; \
     fi
 
-USER container
 ENV USER=container HOME=/home/container
 WORKDIR /home/container
 
